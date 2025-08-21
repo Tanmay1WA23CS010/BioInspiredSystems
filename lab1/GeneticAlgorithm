@@ -1,0 +1,59 @@
+import random
+
+# Parameters
+POP_SIZE = 4            # Size of the population
+CHROMOSOME_LENGTH = 5   # Length of each chromosome (5 bits)
+GENERATIONS = 10        # Number of generations
+MUTATION_RATE = 0.1     # Mutation probability
+CROSSOVER_RATE = 0.7    # Crossover probability
+
+# Fitness function: f(x) = x^2
+def fitness(x):
+    return x ** 2
+
+# Create initial population with random chromosomes
+population = [''.join(random.choice('01') for _ in range(CHROMOSOME_LENGTH)) for _ in range(POP_SIZE)]
+
+for generation in range(GENERATIONS):
+    print(f"Generation {generation + 1}:")
+
+    # Step 1: Calculate fitness for each chromosome
+    fitness_values = [fitness(int(chrom, 2)) for chrom in population]
+    print("Population and Fitness:")
+    for chrom, fit in zip(population, fitness_values):
+        print(f"Chromosome: {chrom} -> Fitness: {fit}")
+
+    # Step 2: Roulette Wheel Selection (select parents)
+    total_fitness = sum(fitness_values)
+    probabilities = [fit / total_fitness for fit in fitness_values]
+    mating_pool = random.choices(population, probabilities, k=POP_SIZE)
+
+    # Step 3: Crossover and Mutation to create new generation
+    new_population = []
+    while len(new_population) < POP_SIZE:
+        parent1, parent2 = random.sample(mating_pool, 2)
+
+        # Crossover
+        if random.random() < CROSSOVER_RATE:
+            point = random.randint(1, CHROMOSOME_LENGTH - 1)
+            child1 = parent1[:point] + parent2[point:]
+            child2 = parent2[:point] + parent1[point:]
+        else:
+            child1, child2 = parent1, parent2
+
+        # Mutation (flip bits with mutation rate)
+        child1 = ''.join('1' if bit == '0' and random.random() < MUTATION_RATE else '0' if bit == '1' and random.random() < MUTATION_RATE else bit for bit in child1)
+        child2 = ''.join('1' if bit == '0' and random.random() < MUTATION_RATE else '0' if bit == '1' and random.random() < MUTATION_RATE else bit for bit in child2)
+
+        new_population.extend([child1, child2])
+
+    # Ensure the population size is constant
+    population = new_population[:POP_SIZE]
+
+    print("New Population:", population)
+    print()
+
+# Step 4: Output the best solution
+best_chromosome = max(population, key=lambda chrom: fitness(int(chrom, 2)))
+best_fitness = fitness(int(best_chromosome, 2))
+print(f"Best solution found: Chromosome = {best_chromosome}, Fitness = {best_fitness}")
