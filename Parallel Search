@@ -1,0 +1,76 @@
+import numpy as np
+
+# -------------------------------------------------------------
+# Parallel Cellular Algorithm (PCA)
+# -------------------------------------------------------------
+
+# Objective function: minimize f(x)
+def f(x):
+    return x**2 - 4*x + 4   # Minimum value = 0 at x = 2
+
+# Parameters
+GRID_SIZE = (10, 10)        # 10x10 grid (100 cells)
+MAX_ITER = 100              # Number of iterations
+SEARCH_SPACE = (-10, 10)    # Range of possible x-values (-10 to 10)
+
+# Initialize grid (each cell = one candidate solution)
+grid = np.random.uniform(SEARCH_SPACE[0], SEARCH_SPACE[1], GRID_SIZE)
+
+# Fitness evaluation for all cells
+def evaluate_fitness(grid):
+    return f(grid)
+
+# Function to get the 3x3 neighborhood (with wrap-around)
+def get_neighbors(grid, i, j):
+    rows, cols = grid.shape
+    neighbors = []
+    for di in [-1, 0, 1]:
+        for dj in [-1, 0, 1]:
+            ni = (i + di) % rows   # Wrap-around vertically
+            nj = (j + dj) % cols   # Wrap-around horizontally
+            neighbors.append(grid[ni, nj])
+    return np.array(neighbors)
+
+# -------------------------------------------------------------
+# Main PCA Loop
+# -------------------------------------------------------------
+
+best_fitness_over_time = []
+
+for iteration in range(MAX_ITER):
+    fitness_grid = evaluate_fitness(grid)
+    new_grid = np.copy(grid)
+    
+    # Update each cell in the grid
+    for i in range(GRID_SIZE[0]):
+        for j in range(GRID_SIZE[1]):
+            # Find neighbors
+            neighbors = get_neighbors(grid, i, j)
+            neighbor_fitness = f(neighbors)
+            
+            # Identify the best neighbor (lowest fitness)
+            best_neighbor = neighbors[np.argmin(neighbor_fitness)]
+            
+            # Update rule: average of all neighbors
+            # (could also use x[i,j] + best_neighbor)/2 for different behavior)
+            new_grid[i, j] = np.mean(neighbors)
+    
+    # Replace the old grid with the updated one
+    grid = new_grid
+    
+    # Track the best solution so far
+    best_x = grid[np.unravel_index(np.argmin(f(grid)), grid.shape)]
+    best_fitness = np.min(f(grid))
+    best_fitness_over_time.append(best_fitness)
+    
+    # Print progress every 10 iterations
+    if iteration % 10 == 0 or iteration == MAX_ITER - 1:
+        print(f"Iteration {iteration+1}/{MAX_ITER} -> Best x: {best_x:.4f}, f(x): {best_fitness:.6f}")
+
+# -------------------------------------------------------------
+# Final Result
+# -------------------------------------------------------------
+
+print("\nBest solution found:")
+print(f"x = {best_x:.6f}")
+print(f"f(x) = {best_fitness:.6f}")
